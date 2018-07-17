@@ -46,7 +46,7 @@ $DB_BENCH  --block_uses_suffix_index=${using_hash_index} \
 
 
 perf script | stackcollapse-perf.pl > out.perf-folded
-perf_figure=/mnt/public/fwu/k${ks}v${vs}_${block_index}.svg
+perf_figure=/mnt/public/fwu/k${ks}v${vs}_${block_index}_opt.svg
 flamegraph.pl out.perf-folded > ${perf_figure}
 
 micros_op=$(grep readrandom readrand.log | awk '{print $3}')
