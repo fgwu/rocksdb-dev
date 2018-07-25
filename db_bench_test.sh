@@ -6,47 +6,43 @@
 
 DB_BENCH=/data/users/fwu/rocksdb-dev/rocksdb/db_bench
 
-if [ ${block_index} = "hash" ]; then
-    using_hash_index=true
-else
-    using_hash_index=false
-fi
-
-echo ks $ks vs $vs block_index ${block_index}  using_hash_index  $using_hash_index
+echo ks $ks vs $vs block_index ${block_index}
 
 rm -rf  /dev/shm/*
 
-$DB_BENCH  --block_uses_suffix_index=${using_hash_index} \
+$DB_BENCH  --data_block_index_type=${block_index} \
            --db=/dev/shm/${block_index} \
            --block_size=16000 --level_compaction_dynamic_level_bytes=1 \
-           --num=200000000 \
+           --num=200000 \
            --key_size=$ks \
            --value_size=$vs \
            --benchmarks=fillseq --compression_type=snappy \
-           --statistics=true --block_restart_interval=1 \
+#           --statistics=true \
+           --block_restart_interval=1 \
            --compression_ratio=0.4 \
-
+#           --num=200000000 \
 time perf record -g -F 99 \
-$DB_BENCH  --block_uses_suffix_index=${using_hash_index} \
+$DB_BENCH  --data_block_index_type=${block_index} \
            --db=/dev/shm/${block_index} \
            --block_size=16000 --level_compaction_dynamic_level_bytes=1 \
            --use_existing_db=true \
-           --num=10000000 \
+           --num=200000 \
            --key_size=$ks \
            --value_size=$vs \
            --benchmarks=readrandom --compression_type=snappy \
-           --statistics=true --block_restart_interval=1 \
+ #          --statistics=true \
+           --block_restart_interval=1 \
            --compression_ratio=0.4 \
            --cache_size=10000000000 \
            --compressed_cache_size=10000000000 \
            > readrand.log
-
+#           --num=10000000 \
 #           --read_cache_size=200000000
 
 
 
 perf script | stackcollapse-perf.pl > out.perf-folded
-perf_figure=/mnt/public/fwu/k${ks}v${vs}_${block_index}_opt.svg
+perf_figure=/mnt/public/fwu/k${ks}v${vs}_${block_index}_mse.svg
 flamegraph.pl out.perf-folded > ${perf_figure}
 
 micros_op=$(grep readrandom readrand.log | awk '{print $3}')
